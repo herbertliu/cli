@@ -164,6 +164,21 @@ Shortcut 是对常用操作的高级封装（`lark-cli drive +<verb> [flags]`）
 | [`+upload`](references/lark-drive-upload.md) | Upload a local file to Drive |
 | [`+download`](references/lark-drive-download.md) | Download a file from Drive to local |
 | [`+add-comment`](references/lark-drive-add-comment.md) | Add a full-document comment, or a local comment to selected docx text (also supports wiki URL resolving to doc/docx) |
+| `+mkdir` | Create a folder in Drive |
+| `+stats` | Get file statistics such as views and likes |
+| `+comment-resolve` | Resolve or restore a document comment |
+| `+comment-replies-list` | List replies under a document comment |
+| `+comment-reply-delete` | Delete a reply under a document comment |
+| `+permission-public-get` | Get public permission settings for a file |
+| `+permission-public-update` | Update public permission settings for a file |
+| `+permission-batch-add` | Batch add permission members to a file |
+| `+permission-password-create` | Create a public sharing password for a file |
+| `+permission-password-delete` | Delete a public sharing password for a file |
+| `+permission-transfer-owner` | Transfer file ownership to another member |
+| `+version-list` | List file versions |
+| `+version-get` | Get a file version detail |
+| `+version-create` | Create a file version |
+| `+version-delete` | Delete a file version |
 
 ## API Resources
 
@@ -228,4 +243,3 @@ lark-cli drive <resource> <method> [flags] # 调用 API
 | `user.remove_subscription` | `docs:event:subscribe` |
 | `user.subscription` | `docs:event:subscribe` |
 | `user.subscription_status` | `docs:event:subscribe` |
-

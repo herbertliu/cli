@@ -12,6 +12,17 @@ metadata:
 
 **CRITICAL — 开始前 MUST 先用 Read 工具读取 [`../lark-shared/SKILL.md`](../lark-shared/SKILL.md)，其中包含认证、权限处理**
 
+## Shortcuts（推荐优先使用）
+
+Shortcut 是对常用操作的高级封装（`lark-cli wiki +<verb> [flags]`）。有 Shortcut 的操作优先使用。
+
+| Shortcut | 说明 |
+|----------|------|
+| `+export` | Export a wiki document to a local Markdown file |
+| `+member-list` | List wiki space members |
+| `+member-add` | Add a member to a wiki space |
+| `+member-remove` | Remove a member from a wiki space |
+
 ## API Resources
 
 ```bash
@@ -30,4 +41,3 @@ lark-cli wiki <resource> <method> [flags] # 调用 API
 | 方法 | 所需 scope |
 |------|-----------|
 | `spaces.get_node` | `wiki:node:read` |
-

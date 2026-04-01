@@ -57,9 +57,13 @@ Shortcut 是对常用操作的高级封装（`lark-cli im +<verb> [flags]`）。
 | Shortcut | 说明 |
 |----------|------|
 | [`+chat-create`](references/lark-im-chat-create.md) | Create a group chat with bot identity; bot-only; creates private/public chats, invites users/bots, optionally sets bot manager |
+| `+chat-delete` | Delete a group chat when the caller has permission |
+| `+chat-link` | Create a group chat share link with configurable validity |
 | [`+chat-messages-list`](references/lark-im-chat-messages-list.md) | List messages in a chat or P2P conversation; user/bot; accepts --chat-id or --user-id, resolves P2P chat_id, supports time range/sort/pagination |
 | [`+chat-search`](references/lark-im-chat-search.md) | Search visible group chats by keyword and/or member open_ids (e.g. look up chat_id by group name); user/bot; supports member/type filters, sorting, and pagination |
 | [`+chat-update`](references/lark-im-chat-update.md) | Update group chat name or description; user/bot; updates a chat's name or description |
+| `+messages-forward` | Forward a single message to a chat or user with bot identity |
+| `+messages-merge-forward` | Merge-forward multiple messages to a chat or user with bot identity |
 | [`+messages-mget`](references/lark-im-messages-mget.md) | Batch get messages by IDs; user/bot; fetches up to 50 om_ message IDs, formats sender names, expands thread replies |
 | [`+messages-reply`](references/lark-im-messages-reply.md) | Reply to a message (supports thread replies) with bot identity; bot-only; supports text/markdown/post/media replies, reply-in-thread, idempotency key |
 | [`+messages-resources-download`](references/lark-im-messages-resources-download.md) | Download images/files from a message; user/bot; downloads image/file resources by message-id and file-key to a safe relative output path |
