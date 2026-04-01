@@ -105,7 +105,7 @@ var DocsExport = common.Shortcut{
 		}
 		title, _ := result["title"].(string)
 		markdown, _ := result["markdown"].(string)
-		markdown = fixSetextAmbiguity(markdown)
+		markdown = fixExportedMarkdown(markdown)
 		outputPath, err := resolveDocTextOutputPath(runtime.Str("output"), title, "document", ".md")
 		if err != nil {
 			return err
@@ -681,11 +681,102 @@ func collectDocBlocks(runtime *common.RuntimeContext, documentID string, recursi
 	return blocks, nil
 }
 
-// fixSetextAmbiguity ensures a blank line precedes any "---" line that
-// immediately follows a non-empty paragraph, preventing the paragraph from
-// being misinterpreted as a Setext H2 heading on re-import.
+// fixExportedMarkdown applies post-processing to Lark-exported Markdown to
+// improve round-trip fidelity on re-import:
+//
+//  1. fixSetextAmbiguity: inserts a blank line before any "---" that immediately
+//     follows a non-empty line, preventing it from being parsed as a Setext H2.
+//
+//  2. fixTopLevelSoftbreaks: inserts a blank line between adjacent non-empty
+//     lines at the top level (outside tables, callouts, code blocks, etc.).
+//     Lark exports each block element on its own line with only \n between them;
+//     standard Markdown parsers collapse those into a single paragraph on
+//     re-import, losing the original block structure entirely.
+func fixExportedMarkdown(md string) string {
+	md = fixSetextAmbiguity(md)
+	md = fixTopLevelSoftbreaks(md)
+	return md
+}
+
 var setextRe = regexp.MustCompile(`(?m)^([^\n]+)\n(-{3,}\s*$)`)
 
 func fixSetextAmbiguity(md string) string {
 	return setextRe.ReplaceAllString(md, "$1\n\n$2")
+}
+
+// blockDelimiters maps opening tags to their closing tags for block elements
+// that must not have extra blank lines inserted inside them.
+var blockDelimiters = [][2]string{
+	{"<lark-table", "</lark-table>"},
+	{"<callout", "</callout>"},
+	{"<quote-container>", "</quote-container>"},
+	{"```", "```"},
+}
+
+// fixTopLevelSoftbreaks ensures that adjacent non-empty lines at the top level
+// of the document are separated by a blank line, so that each Lark block
+// element becomes its own Markdown paragraph on re-import.
+func fixTopLevelSoftbreaks(md string) string {
+	lines := strings.Split(md, "\n")
+	out := make([]string, 0, len(lines)*2)
+
+	// depth tracks how deeply nested we are inside block elements.
+	// A line that opens a block increments depth; its closing tag decrements.
+	depth := 0
+	// codeBlock tracks whether we are inside a fenced code block (``` ... ```),
+	// because ``` is both opener and closer.
+	inCodeBlock := false
+
+	for i, line := range lines {
+		trimmed := strings.TrimSpace(line)
+
+		// Track fenced code blocks first (``` toggles state).
+		if strings.HasPrefix(trimmed, "```") {
+			if inCodeBlock {
+				inCodeBlock = false
+				depth--
+			} else {
+				inCodeBlock = true
+				depth++
+			}
+			out = append(out, line)
+			continue
+		}
+
+		if !inCodeBlock {
+			// Check for block openers (other than ```).
+			for _, bd := range blockDelimiters {
+				if bd[0] == "```" {
+					continue
+				}
+				if strings.HasPrefix(trimmed, bd[0]) {
+					depth++
+				}
+				if strings.Contains(trimmed, bd[1]) {
+					depth--
+					if depth < 0 {
+						depth = 0
+					}
+				}
+			}
+		}
+
+		// Insert a blank line before this line if:
+		// - we are at top level (depth == 0)
+		// - this line is non-empty
+		// - the previous output line is non-empty (avoid double-blanks)
+		if depth == 0 && trimmed != "" && i > 0 {
+			prev := ""
+			if len(out) > 0 {
+				prev = strings.TrimSpace(out[len(out)-1])
+			}
+			if prev != "" {
+				out = append(out, "")
+			}
+		}
+
+		out = append(out, line)
+	}
+
+	return strings.Join(out, "\n")
 }
