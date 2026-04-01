@@ -20,6 +20,7 @@ import (
 	"github.com/larksuite/cli/shortcuts/sheets"
 	"github.com/larksuite/cli/shortcuts/task"
 	"github.com/larksuite/cli/shortcuts/vc"
+	"github.com/larksuite/cli/shortcuts/wiki"
 	"github.com/larksuite/cli/shortcuts/whiteboard"
 )
 
@@ -38,6 +39,7 @@ func init() {
 	allShortcuts = append(allShortcuts, mail.Shortcuts()...)
 	allShortcuts = append(allShortcuts, task.Shortcuts()...)
 	allShortcuts = append(allShortcuts, vc.Shortcuts()...)
+	allShortcuts = append(allShortcuts, wiki.Shortcuts()...)
 	allShortcuts = append(allShortcuts, whiteboard.Shortcuts()...)
 }
 
