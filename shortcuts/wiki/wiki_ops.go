@@ -91,7 +91,7 @@ var WikiMemberList = common.Shortcut{
 		if v := runtime.Str("page-token"); v != "" {
 			params["page_token"] = v
 		}
-		data, err := runtime.CallAPI("GET", fmt.Sprintf("/open-apis/wiki/v2/spaces/%s/members", runtime.Str("space-id")), params, nil)
+		data, err := runtime.CallAPI("GET", fmt.Sprintf("/open-apis/wiki/v2/spaces/%s/members", validate.EncodePathSegment(runtime.Str("space-id"))), params, nil)
 		if err != nil {
 			return err
 		}
@@ -156,7 +156,7 @@ var WikiMemberAdd = common.Shortcut{
 			})
 	},
 	Execute: func(ctx context.Context, runtime *common.RuntimeContext) error {
-		data, err := runtime.CallAPI("POST", fmt.Sprintf("/open-apis/wiki/v2/spaces/%s/members", runtime.Str("space-id")), nil, map[string]interface{}{
+		data, err := runtime.CallAPI("POST", fmt.Sprintf("/open-apis/wiki/v2/spaces/%s/members", validate.EncodePathSegment(runtime.Str("space-id"))), nil, map[string]interface{}{
 			"member": map[string]interface{}{
 				"member_type": runtime.Str("member-type"),
 				"member_id":   runtime.Str("member-id"),
@@ -200,7 +200,7 @@ var WikiMemberRemove = common.Shortcut{
 			})
 	},
 	Execute: func(ctx context.Context, runtime *common.RuntimeContext) error {
-		data, err := runtime.CallAPI("DELETE", fmt.Sprintf("/open-apis/wiki/v2/spaces/%s/members/%s", runtime.Str("space-id"), runtime.Str("member-id")), nil, map[string]interface{}{
+		data, err := runtime.CallAPI("DELETE", fmt.Sprintf("/open-apis/wiki/v2/spaces/%s/members/%s", validate.EncodePathSegment(runtime.Str("space-id")), validate.EncodePathSegment(runtime.Str("member-id"))), nil, map[string]interface{}{
 			"member": map[string]interface{}{
 				"member_type": runtime.Str("member-type"),
 				"member_id":   runtime.Str("member-id"),

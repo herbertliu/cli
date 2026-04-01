@@ -18,7 +18,7 @@ var DrivePermissionPasswordCreate = common.Shortcut{
 	Command:     "+permission-password-create",
 	Description: "Create a public sharing password for a file",
 	Risk:        "write",
-	Scopes:      []string{},
+	Scopes:      []string{"docs:permission.member:auth"},
 	AuthTypes:   []string{"user", "bot"},
 	HasFormat:   true,
 	Flags:       permissionTokenFlags(),
@@ -47,7 +47,7 @@ var DrivePermissionPasswordDelete = common.Shortcut{
 	Command:     "+permission-password-delete",
 	Description: "Delete a public sharing password for a file",
 	Risk:        "high-risk-write",
-	Scopes:      []string{},
+	Scopes:      []string{"docs:permission.member:auth"},
 	AuthTypes:   []string{"user", "bot"},
 	HasFormat:   true,
 	Flags:       permissionTokenFlags(),
@@ -76,7 +76,7 @@ var DriveVersionList = common.Shortcut{
 	Command:     "+version-list",
 	Description: "List file versions",
 	Risk:        "read",
-	Scopes:      []string{},
+	Scopes:      []string{"drive:drive.metadata:readonly"},
 	AuthTypes:   []string{"user", "bot"},
 	HasFormat:   true,
 	Flags: []common.Flag{
@@ -148,7 +148,7 @@ var DriveVersionGet = common.Shortcut{
 	Command:     "+version-get",
 	Description: "Get details for a file version",
 	Risk:        "read",
-	Scopes:      []string{},
+	Scopes:      []string{"drive:drive.metadata:readonly"},
 	AuthTypes:   []string{"user", "bot"},
 	HasFormat:   true,
 	Flags: []common.Flag{
@@ -182,7 +182,7 @@ var DriveVersionCreate = common.Shortcut{
 	Command:     "+version-create",
 	Description: "Create a file version",
 	Risk:        "write",
-	Scopes:      []string{},
+	Scopes:      []string{"drive:drive"},
 	AuthTypes:   []string{"user", "bot"},
 	HasFormat:   true,
 	Flags: []common.Flag{
@@ -223,7 +223,7 @@ var DriveVersionDelete = common.Shortcut{
 	Command:     "+version-delete",
 	Description: "Delete a file version",
 	Risk:        "high-risk-write",
-	Scopes:      []string{},
+	Scopes:      []string{"drive:drive"},
 	AuthTypes:   []string{"user", "bot"},
 	HasFormat:   true,
 	Flags: []common.Flag{
