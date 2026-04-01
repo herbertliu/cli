@@ -16,5 +16,9 @@ func Shortcuts() []common.Shortcut {
 		DriveCommentResolve,
 		DriveCommentRepliesList,
 		DriveCommentReplyDelete,
+		DrivePermissionPublicGet,
+		DrivePermissionPublicUpdate,
+		DrivePermissionBatchAdd,
+		DrivePermissionTransferOwner,
 	}
 }

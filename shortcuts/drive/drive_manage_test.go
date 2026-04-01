@@ -30,6 +30,10 @@ func TestDriveShortcuts(t *testing.T) {
 		"+comment-resolve",
 		"+comment-replies-list",
 		"+comment-reply-delete",
+		"+permission-public-get",
+		"+permission-public-update",
+		"+permission-batch-add",
+		"+permission-transfer-owner",
 	}
 	if !reflect.DeepEqual(commands, want) {
 		t.Fatalf("Shortcuts() commands = %#v, want %#v", commands, want)
@@ -120,6 +124,69 @@ func TestDriveCommentReplyDeleteDryRun(t *testing.T) {
 	got := DriveCommentReplyDelete.DryRun(context.Background(), runtime).Format()
 	if !strings.Contains(got, "DELETE /open-apis/drive/v1/files/doccn_123/comments/cmt_123/replies/rpl_123") {
 		t.Fatalf("dry-run missing delete path: %s", got)
+	}
+}
+
+func TestDrivePermissionPublicUpdateDryRun(t *testing.T) {
+	cmd := &cobra.Command{Use: "drive"}
+	cmd.Flags().String("token", "", "")
+	cmd.Flags().String("file-type", "docx", "")
+	cmd.Flags().String("json", "", "")
+	_ = cmd.Flags().Set("token", "doccn_123")
+	_ = cmd.Flags().Set("json", `{"external_access":true}`)
+
+	runtime := common.TestNewRuntimeContext(cmd, driveManageTestConfig())
+	got := DrivePermissionPublicUpdate.DryRun(context.Background(), runtime).Format()
+	if !strings.Contains(got, "PATCH /open-apis/drive/v1/permissions/doccn_123/public") {
+		t.Fatalf("dry-run missing permission public path: %s", got)
+	}
+	if !strings.Contains(got, "\"external_access\":true") {
+		t.Fatalf("dry-run missing body: %s", got)
+	}
+}
+
+func TestDrivePermissionBatchAddDryRun(t *testing.T) {
+	cmd := &cobra.Command{Use: "drive"}
+	cmd.Flags().String("token", "", "")
+	cmd.Flags().String("file-type", "docx", "")
+	cmd.Flags().String("members-json", "", "")
+	cmd.Flags().Bool("notify", false, "")
+	_ = cmd.Flags().Set("token", "doccn_123")
+	_ = cmd.Flags().Set("members-json", `[{"member_type":"email","member_id":"user@example.com","perm":"view"}]`)
+	_ = cmd.Flags().Set("notify", "true")
+
+	runtime := common.TestNewRuntimeContext(cmd, driveManageTestConfig())
+	got := DrivePermissionBatchAdd.DryRun(context.Background(), runtime).Format()
+	if !strings.Contains(got, "POST /open-apis/drive/v1/permissions/doccn_123/members/batch_create") {
+		t.Fatalf("dry-run missing batch_create path: %s", got)
+	}
+	if !strings.Contains(got, "\"member_type\":\"email\"") {
+		t.Fatalf("dry-run missing members body: %s", got)
+	}
+}
+
+func TestDrivePermissionTransferOwnerDryRun(t *testing.T) {
+	cmd := &cobra.Command{Use: "drive"}
+	cmd.Flags().String("token", "", "")
+	cmd.Flags().String("file-type", "docx", "")
+	cmd.Flags().String("member-type", "", "")
+	cmd.Flags().String("member-id", "", "")
+	cmd.Flags().Bool("notify", false, "")
+	cmd.Flags().Bool("remove-old-owner", false, "")
+	cmd.Flags().Bool("stay-put", false, "")
+	cmd.Flags().String("old-owner-perm", "full_access", "")
+	_ = cmd.Flags().Set("token", "doccn_123")
+	_ = cmd.Flags().Set("member-type", "email")
+	_ = cmd.Flags().Set("member-id", "user@example.com")
+	_ = cmd.Flags().Set("notify", "true")
+
+	runtime := common.TestNewRuntimeContext(cmd, driveManageTestConfig())
+	got := DrivePermissionTransferOwner.DryRun(context.Background(), runtime).Format()
+	if !strings.Contains(got, "POST /open-apis/drive/v1/permissions/doccn_123/members/transfer_owner") {
+		t.Fatalf("dry-run missing transfer_owner path: %s", got)
+	}
+	if !strings.Contains(got, "\"member_id\":\"user@example.com\"") {
+		t.Fatalf("dry-run missing owner body: %s", got)
 	}
 }
 
