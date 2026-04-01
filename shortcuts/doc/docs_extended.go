@@ -704,74 +704,108 @@ func fixSetextAmbiguity(md string) string {
 	return setextRe.ReplaceAllString(md, "$1\n\n$2")
 }
 
-// blockDelimiters maps opening tags to their closing tags for block elements
-// that must not have extra blank lines inserted inside them.
-var blockDelimiters = [][2]string{
-	{"<lark-table", "</lark-table>"},
+// opaqueBlocks are block elements whose interior must never be modified.
+var opaqueBlocks = [][2]string{
 	{"<callout", "</callout>"},
 	{"<quote-container>", "</quote-container>"},
 	{"```", "```"},
 }
 
-// fixTopLevelSoftbreaks ensures that adjacent non-empty lines at the top level
-// of the document are separated by a blank line, so that each Lark block
-// element becomes its own Markdown paragraph on re-import.
+// isTableStructuralTag returns true for lark-table tags that are structural
+// (table/tr/td open/close) and should not themselves trigger blank-line insertion.
+func isTableStructuralTag(s string) bool {
+	return strings.HasPrefix(s, "<lark-t") ||
+		strings.HasPrefix(s, "</lark-t")
+}
+
+// fixTopLevelSoftbreaks ensures that adjacent non-empty content lines are
+// separated by a blank line in two contexts:
+//  1. Top level (depth == 0): every Lark block becomes its own Markdown paragraph.
+//  2. Inside <lark-td>: multi-line cell content is preserved as separate paragraphs.
+//
+// Structural table tags (<lark-table>, <lark-tr>, <lark-td> and their closing
+// counterparts) never trigger blank-line insertion themselves. Opaque blocks
+// (callout, quote-container, code fences) are left untouched.
 func fixTopLevelSoftbreaks(md string) string {
 	lines := strings.Split(md, "\n")
 	out := make([]string, 0, len(lines)*2)
 
-	// depth tracks how deeply nested we are inside block elements.
-	// A line that opens a block increments depth; its closing tag decrements.
-	depth := 0
-	// codeBlock tracks whether we are inside a fenced code block (``` ... ```),
-	// because ``` is both opener and closer.
+	// opaqueDepth tracks nesting inside opaque blocks (callout, quote, code).
+	opaqueDepth := 0
 	inCodeBlock := false
+	// inTableCell is true when we are between <lark-td> and </lark-td>.
+	inTableCell := false
+	// tableDepth tracks <lark-table> nesting (for the outer structure).
+	tableDepth := 0
 
 	for i, line := range lines {
 		trimmed := strings.TrimSpace(line)
 
-		// Track fenced code blocks first (``` toggles state).
+		// --- Track fenced code blocks (``` toggles). ---
 		if strings.HasPrefix(trimmed, "```") {
 			if inCodeBlock {
 				inCodeBlock = false
-				depth--
+				opaqueDepth--
 			} else {
 				inCodeBlock = true
-				depth++
+				opaqueDepth++
 			}
 			out = append(out, line)
 			continue
 		}
 
 		if !inCodeBlock {
-			// Check for block openers (other than ```).
-			for _, bd := range blockDelimiters {
+			// --- Track opaque blocks (other than ```). ---
+			for _, bd := range opaqueBlocks {
 				if bd[0] == "```" {
 					continue
 				}
 				if strings.HasPrefix(trimmed, bd[0]) {
-					depth++
+					opaqueDepth++
 				}
 				if strings.Contains(trimmed, bd[1]) {
-					depth--
-					if depth < 0 {
-						depth = 0
+					opaqueDepth--
+					if opaqueDepth < 0 {
+						opaqueDepth = 0
 					}
 				}
 			}
+
+			// --- Track table structure. ---
+			if strings.HasPrefix(trimmed, "<lark-table") {
+				tableDepth++
+			}
+			if strings.Contains(trimmed, "</lark-table>") {
+				tableDepth--
+				if tableDepth < 0 {
+					tableDepth = 0
+				}
+			}
+			if strings.HasPrefix(trimmed, "<lark-td>") {
+				inTableCell = true
+			}
+			if strings.Contains(trimmed, "</lark-td>") {
+				inTableCell = false
+			}
 		}
 
-		// Insert a blank line before this line if:
-		// - we are at top level (depth == 0)
-		// - this line is non-empty
-		// - the previous output line is non-empty (avoid double-blanks)
-		if depth == 0 && trimmed != "" && i > 0 {
-			prev := ""
-			if len(out) > 0 {
-				prev = strings.TrimSpace(out[len(out)-1])
-			}
-			if prev != "" {
-				out = append(out, "")
+		// --- Decide whether to insert a blank line before this line. ---
+		// Skip if inside an opaque block.
+		if opaqueDepth == 0 && trimmed != "" && i > 0 {
+			// Skip structural table tags — they are not content lines.
+			isStructural := isTableStructuralTag(trimmed)
+
+			// Insert blank line if: (a) top level, or (b) inside a table cell,
+			// AND this line is a content line, AND the previous output is non-empty.
+			if !isStructural && (tableDepth == 0 || inTableCell) {
+				prev := ""
+				if len(out) > 0 {
+					prev = strings.TrimSpace(out[len(out)-1])
+				}
+				// Don't insert blank line after a structural tag either.
+				if prev != "" && !isTableStructuralTag(prev) {
+					out = append(out, "")
+				}
 			}
 		}
 
