@@ -10,5 +10,8 @@ func Shortcuts() []common.Shortcut {
 	return []common.Shortcut{
 		ContactSearchUser,
 		ContactGetUser,
+		ContactDepartmentGet,
+		ContactDepartmentChildren,
+		ContactDepartmentUsersList,
 	}
 }
