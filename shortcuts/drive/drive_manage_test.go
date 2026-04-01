@@ -27,6 +27,9 @@ func TestDriveShortcuts(t *testing.T) {
 		"+add-comment",
 		"+mkdir",
 		"+stats",
+		"+comment-resolve",
+		"+comment-replies-list",
+		"+comment-reply-delete",
 	}
 	if !reflect.DeepEqual(commands, want) {
 		t.Fatalf("Shortcuts() commands = %#v, want %#v", commands, want)
@@ -63,6 +66,60 @@ func TestDriveStatsDryRun(t *testing.T) {
 	}
 	if !strings.Contains(got, "file_type=docx") {
 		t.Fatalf("dry-run missing file_type: %s", got)
+	}
+}
+
+func TestDriveCommentResolveDryRun(t *testing.T) {
+	cmd := &cobra.Command{Use: "drive"}
+	cmd.Flags().String("doc", "", "")
+	cmd.Flags().String("comment-id", "", "")
+	cmd.Flags().Bool("unresolve", false, "")
+	_ = cmd.Flags().Set("doc", "https://example.larksuite.com/docx/doccn_123")
+	_ = cmd.Flags().Set("comment-id", "cmt_123")
+
+	runtime := common.TestNewRuntimeContext(cmd, driveManageTestConfig())
+	got := DriveCommentResolve.DryRun(context.Background(), runtime).Format()
+	if !strings.Contains(got, "PATCH /open-apis/drive/v1/files/doccn_123/comments/cmt_123") {
+		t.Fatalf("dry-run missing comment patch path: %s", got)
+	}
+	if !strings.Contains(got, "\"resolved\":true") {
+		t.Fatalf("dry-run missing resolved body: %s", got)
+	}
+}
+
+func TestDriveCommentRepliesListDryRun(t *testing.T) {
+	cmd := &cobra.Command{Use: "drive"}
+	cmd.Flags().String("doc", "", "")
+	cmd.Flags().String("comment-id", "", "")
+	cmd.Flags().String("page-size", "20", "")
+	cmd.Flags().String("page-token", "", "")
+	_ = cmd.Flags().Set("doc", "doccn_123")
+	_ = cmd.Flags().Set("comment-id", "cmt_123")
+	_ = cmd.Flags().Set("page-size", "30")
+
+	runtime := common.TestNewRuntimeContext(cmd, driveManageTestConfig())
+	got := DriveCommentRepliesList.DryRun(context.Background(), runtime).Format()
+	if !strings.Contains(got, "GET /open-apis/drive/v1/files/doccn_123/comments/cmt_123/replies") {
+		t.Fatalf("dry-run missing replies path: %s", got)
+	}
+	if !strings.Contains(got, "page_size=30") {
+		t.Fatalf("dry-run missing page size: %s", got)
+	}
+}
+
+func TestDriveCommentReplyDeleteDryRun(t *testing.T) {
+	cmd := &cobra.Command{Use: "drive"}
+	cmd.Flags().String("doc", "", "")
+	cmd.Flags().String("comment-id", "", "")
+	cmd.Flags().String("reply-id", "", "")
+	_ = cmd.Flags().Set("doc", "doccn_123")
+	_ = cmd.Flags().Set("comment-id", "cmt_123")
+	_ = cmd.Flags().Set("reply-id", "rpl_123")
+
+	runtime := common.TestNewRuntimeContext(cmd, driveManageTestConfig())
+	got := DriveCommentReplyDelete.DryRun(context.Background(), runtime).Format()
+	if !strings.Contains(got, "DELETE /open-apis/drive/v1/files/doccn_123/comments/cmt_123/replies/rpl_123") {
+		t.Fatalf("dry-run missing delete path: %s", got)
 	}
 }
 

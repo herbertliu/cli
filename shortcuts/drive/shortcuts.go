@@ -13,5 +13,8 @@ func Shortcuts() []common.Shortcut {
 		DriveAddComment,
 		DriveMkdir,
 		DriveStats,
+		DriveCommentResolve,
+		DriveCommentRepliesList,
+		DriveCommentReplyDelete,
 	}
 }
