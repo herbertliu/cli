@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -104,6 +105,7 @@ var DocsExport = common.Shortcut{
 		}
 		title, _ := result["title"].(string)
 		markdown, _ := result["markdown"].(string)
+		markdown = fixSetextAmbiguity(markdown)
 		outputPath, err := resolveDocTextOutputPath(runtime.Str("output"), title, "document", ".md")
 		if err != nil {
 			return err
@@ -677,4 +679,13 @@ func collectDocBlocks(runtime *common.RuntimeContext, documentID string, recursi
 		}
 	}
 	return blocks, nil
+}
+
+// fixSetextAmbiguity ensures a blank line precedes any "---" line that
+// immediately follows a non-empty paragraph, preventing the paragraph from
+// being misinterpreted as a Setext H2 heading on re-import.
+var setextRe = regexp.MustCompile(`(?m)^([^\n]+)\n(-{3,}\s*$)`)
+
+func fixSetextAmbiguity(md string) string {
+	return setextRe.ReplaceAllString(md, "$1\n\n$2")
 }
