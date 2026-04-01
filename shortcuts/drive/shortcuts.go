@@ -19,6 +19,12 @@ func Shortcuts() []common.Shortcut {
 		DrivePermissionPublicGet,
 		DrivePermissionPublicUpdate,
 		DrivePermissionBatchAdd,
+		DrivePermissionPasswordCreate,
+		DrivePermissionPasswordDelete,
 		DrivePermissionTransferOwner,
+		DriveVersionList,
+		DriveVersionGet,
+		DriveVersionCreate,
+		DriveVersionDelete,
 	}
 }

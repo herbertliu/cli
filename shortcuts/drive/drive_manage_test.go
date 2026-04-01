@@ -33,7 +33,13 @@ func TestDriveShortcuts(t *testing.T) {
 		"+permission-public-get",
 		"+permission-public-update",
 		"+permission-batch-add",
+		"+permission-password-create",
+		"+permission-password-delete",
 		"+permission-transfer-owner",
+		"+version-list",
+		"+version-get",
+		"+version-create",
+		"+version-delete",
 	}
 	if !reflect.DeepEqual(commands, want) {
 		t.Fatalf("Shortcuts() commands = %#v, want %#v", commands, want)
@@ -187,6 +193,33 @@ func TestDrivePermissionTransferOwnerDryRun(t *testing.T) {
 	}
 	if !strings.Contains(got, "\"member_id\":\"user@example.com\"") {
 		t.Fatalf("dry-run missing owner body: %s", got)
+	}
+}
+
+func TestDrivePermissionPasswordCreateDryRun(t *testing.T) {
+	cmd := &cobra.Command{Use: "drive"}
+	cmd.Flags().String("token", "", "")
+	cmd.Flags().String("file-type", "docx", "")
+	_ = cmd.Flags().Set("token", "doccn_123")
+	runtime := common.TestNewRuntimeContext(cmd, driveManageTestConfig())
+	got := DrivePermissionPasswordCreate.DryRun(context.Background(), runtime).Format()
+	if !strings.Contains(got, "POST /open-apis/drive/v1/permissions/doccn_123/public/password") {
+		t.Fatalf("unexpected dry-run: %s", got)
+	}
+}
+
+func TestDriveVersionCreateDryRun(t *testing.T) {
+	cmd := &cobra.Command{Use: "drive"}
+	cmd.Flags().String("file-token", "", "")
+	cmd.Flags().String("file-type", "docx", "")
+	cmd.Flags().String("name", "", "")
+	cmd.Flags().String("user-id-type", "open_id", "")
+	_ = cmd.Flags().Set("file-token", "doccn_123")
+	_ = cmd.Flags().Set("name", "v1")
+	runtime := common.TestNewRuntimeContext(cmd, driveManageTestConfig())
+	got := DriveVersionCreate.DryRun(context.Background(), runtime).Format()
+	if !strings.Contains(got, "POST /open-apis/drive/v1/files/doccn_123/versions") || !strings.Contains(got, "\"name\":\"v1\"") {
+		t.Fatalf("unexpected dry-run: %s", got)
 	}
 }
 
