@@ -693,8 +693,29 @@ func collectDocBlocks(runtime *common.RuntimeContext, documentID string, recursi
 //     standard Markdown parsers collapse those into a single paragraph on
 //     re-import, losing the original block structure entirely.
 func fixExportedMarkdown(md string) string {
+	md = fixBoldSpacing(md)
 	md = fixSetextAmbiguity(md)
 	md = fixTopLevelSoftbreaks(md)
+	return md
+}
+
+// fixBoldSpacing fixes two issues with bold markers exported by Lark:
+//
+//  1. Trailing whitespace before closing **: "**text **" → "**text**"
+//     CommonMark requires no space before a closing delimiter; otherwise the
+//     ** is rendered as literal text.
+//
+//  2. Redundant bold in ATX headings: "# **text**" → "# text"
+//     Headings are already bold, so the inner ** is visually redundant and
+//     some renderers display the markers literally.
+var (
+	boldTrailingSpaceRe = regexp.MustCompile(`(\*\*\S[^*]*?)\s+(\*\*)`)
+	headingBoldRe       = regexp.MustCompile(`(?m)^(#{1,6})\s+\*\*(.+?)\*\*\s*$`)
+)
+
+func fixBoldSpacing(md string) string {
+	md = boldTrailingSpaceRe.ReplaceAllString(md, "$1$2")
+	md = headingBoldRe.ReplaceAllString(md, "$1 $2")
 	return md
 }
 
