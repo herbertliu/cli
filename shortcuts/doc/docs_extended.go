@@ -795,9 +795,13 @@ func fixTopLevelSoftbreaks(md string) string {
 			// Skip structural table tags — they are not content lines.
 			isStructural := isTableStructuralTag(trimmed)
 
+			// Don't split consecutive blockquote lines ("> ...") — they form
+			// one continuous blockquote in the original document.
+			isBlockquote := strings.HasPrefix(trimmed, "> ")
+
 			// Insert blank line if: (a) top level, or (b) inside a table cell,
 			// AND this line is a content line, AND the previous output is non-empty.
-			if !isStructural && (tableDepth == 0 || inTableCell) {
+			if !isStructural && !isBlockquote && (tableDepth == 0 || inTableCell) {
 				prev := ""
 				if len(out) > 0 {
 					prev = strings.TrimSpace(out[len(out)-1])
