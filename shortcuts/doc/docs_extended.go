@@ -696,6 +696,11 @@ func fixExportedMarkdown(md string) string {
 	md = fixBoldSpacing(md)
 	md = fixSetextAmbiguity(md)
 	md = fixTopLevelSoftbreaks(md)
+	// Collapse runs of 3+ consecutive newlines into exactly 2 (one blank line).
+	for strings.Contains(md, "\n\n\n") {
+		md = strings.ReplaceAll(md, "\n\n\n", "\n\n")
+	}
+	md = strings.TrimRight(md, "\n") + "\n"
 	return md
 }
 
@@ -709,12 +714,20 @@ func fixExportedMarkdown(md string) string {
 //     Headings are already bold, so the inner ** is visually redundant and
 //     some renderers display the markers literally.
 var (
-	boldTrailingSpaceRe = regexp.MustCompile(`(\*\*\S[^*]*?)\s+(\*\*)`)
-	headingBoldRe       = regexp.MustCompile(`(?m)^(#{1,6})\s+\*\*(.+?)\*\*\s*$`)
+	boldTrailingSpaceRe   = regexp.MustCompile(`(\*\*\S[^*]*?)\s+(\*\*)`)
+	italicTrailingSpaceRe = regexp.MustCompile(`(\*\S[^*]*?)\s+(\*)`)
+	headingBoldRe         = regexp.MustCompile(`(?m)^(#{1,6})\s+\*\*(.+?)\*\*\s*$`)
 )
 
 func fixBoldSpacing(md string) string {
-	md = boldTrailingSpaceRe.ReplaceAllString(md, "$1$2")
+	// Process line-by-line to avoid cross-line mismatches where ** from
+	// different bold spans on different lines confuse the regex engine.
+	lines := strings.Split(md, "\n")
+	for i, line := range lines {
+		lines[i] = boldTrailingSpaceRe.ReplaceAllString(line, "$1$2")
+		lines[i] = italicTrailingSpaceRe.ReplaceAllString(lines[i], "$1$2")
+	}
+	md = strings.Join(lines, "\n")
 	md = headingBoldRe.ReplaceAllString(md, "$1 $2")
 	return md
 }
