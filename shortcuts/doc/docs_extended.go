@@ -695,6 +695,7 @@ func collectDocBlocks(runtime *common.RuntimeContext, documentID string, recursi
 func fixExportedMarkdown(md string) string {
 	md = fixBoldSpacing(md)
 	md = fixSetextAmbiguity(md)
+	md = fixBlockquoteHardBreaks(md)
 	md = fixTopLevelSoftbreaks(md)
 	// Collapse runs of 3+ consecutive newlines into exactly 2 (one blank line).
 	for strings.Contains(md, "\n\n\n") {
@@ -702,6 +703,24 @@ func fixExportedMarkdown(md string) string {
 	}
 	md = strings.TrimRight(md, "\n") + "\n"
 	return md
+}
+
+// fixBlockquoteHardBreaks inserts a blank blockquote line (">") between
+// consecutive blockquote content lines. This forces each line into its own
+// paragraph within the blockquote, so MCP create-doc preserves line breaks
+// instead of collapsing them into a single paragraph.
+//
+// Before: "> line1\n> line2"  →  After: "> line1\n>\n> line2"
+func fixBlockquoteHardBreaks(md string) string {
+	lines := strings.Split(md, "\n")
+	out := make([]string, 0, len(lines)*2)
+	for i, line := range lines {
+		out = append(out, line)
+		if strings.HasPrefix(line, "> ") && i+1 < len(lines) && strings.HasPrefix(lines[i+1], "> ") {
+			out = append(out, ">")
+		}
+	}
+	return strings.Join(out, "\n")
 }
 
 // fixBoldSpacing fixes two issues with bold markers exported by Lark:
@@ -831,7 +850,7 @@ func fixTopLevelSoftbreaks(md string) string {
 
 			// Don't split consecutive blockquote lines ("> ...") — they form
 			// one continuous blockquote in the original document.
-			isBlockquote := strings.HasPrefix(trimmed, "> ")
+			isBlockquote := strings.HasPrefix(trimmed, "> ") || trimmed == ">"
 
 			// Insert blank line if: (a) top level, or (b) inside a table cell,
 			// AND this line is a content line, AND the previous output is non-empty.
